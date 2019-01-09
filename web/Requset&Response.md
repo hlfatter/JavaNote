@@ -102,6 +102,174 @@ Referer:...				记录本次请求的来源，作用：防盗链以及统计
 域对象：有一定作用范围的对象
 作用范围：一次请求范围，请求转发时一次请求范围内
 创建和销毁时间：当访问服务器被创建，当响应结束之后服务器会销毁request对象；
+api:
+	存值：request.setAttribute(String name,Object value);
+	取值：Object value=request.getAttribute(String name);
+	移除值：request.removeAttribute(String name);
+```
 
+# 6.BeanUtils
+
+* ## Beanutils工具类
+
+```java
+作用：给javabean属性赋值
+javabean：以前的标准java类，要求：
+	* 私有的成员变量
+	* 空参构造
+	* public类型的getter和setter方法
+javabean的属性：不同于成员变量，是getter和setter方法去掉set和get剩余部分
+
+常用方法：
+	BeanUtils.setProperty(javabean对象.属性名.属性值);
+	String value=BeanUtils.getProperty(javabean对象.属性名);
+	//1.获取请求参数,并且封装请求参数
+        Manager manager=new Manager();
+        try {
+                        	       BeanUtils.populate(manager,request.getParameterMap());//很常用
+        } catch (IllegalAccessException e) {
+        e.printStackTrace();
+        } catch (InvocationTargetException e) {
+        e.printStackTrace();
+        }
+```
+
+**注意：html表单的name属性值要和javabean的属性一致**
+
+# Response
+
+## 1.http协响应内容
+
+```java
+1.响应行：
+	协议版本  状态码   状态描述
+	HTTP/1.1  200		ok
+	常见的状态码：
+		200：响应成功了
+		302：重定向
+		304：使用缓存
+		404：访问资源不存在，也就是url路径错误
+		405：get请求没有对应的doGet方法，post请求没有对应的doPost方法；
+		500：服务器java代码有异常，一般是XxxException
+2.响应头：一般都是一个key对应一个value的键值对，也有一个key对应多个value的键值对；
+	Content-Type:告诉浏览器响应的数据类型以及采用的字符集
+	Content-disposition:告诉浏览器以文件下载的形式解析响应内容；
+	location:告诉浏览器重定向到哪个资源页面
+3.响应空行
+4.响应体：响应的内容
+```
+
+## 2.response对象重定向实现页面跳转
+
+`api：response.sendRedirect("/虚拟路径/资源页面名词");`
+
+* **请求转发和重定向的区别：**
+
+```java
+1.请求转发是一次请求一次响应，重定向两次请求两次响应
+2.请求转发地址栏不会发生改变，重定向地址栏会改变
+3.请求转发路径不包含虚拟路径，重定向路径包含虚拟路径
+4。如果跳转前后需要使用request域对象进行数据传递，那么只能使用请求转发，否则用重定向
+```
+
+## 3.Web中页面访问路径问题
+
+```java
+相对路径：相对当前页面访问路径中的所在目录，相对路径以./(当前目录)或者../(上一级目录)开头，使用相对路径要清除当前页面的访问路径和要跳转资源的访问路径
+	当前页面路径：http://localhost:8080/UManager/loginServlet
+	要跳转的路:http://localhost:8080/UManager/list.html
+	相对路径写法：./list.html
+绝对路径：以/开头，默认省略了http://localhost:8080，
+	写绝对路径的关键：虚拟路径
+	客户端路径：从客户端访问服务器的路径就是客户端路径，需要写虚拟路径
+	服务端路径：服务器内部跳转的路径，请求转发
+	
+```
+
+**总结：目前使用绝对路径，处理请求转发之外，其他的都要写虚拟路径**
+
+## 4.response响应内容以及中文乱码问题
+
+```java
+1.使用字符流响应中文：
+	response.getWriter().write("响应内容");
+2.字符流中文乱码问题
+	原因：
+		1.response缓冲区默认字符集是iso-8859-1,不支持中文
+		2.response缓冲区字符集和浏览器采用的字符集不一致
+	解决办法：设置response缓冲区和浏览器采用的字符集都是utf-8即可，在获取字符流之前设置；
+	response.setContentType("text/html;charset=utf-8");
+3.字节流响应中文：
+	response.getOutputStream().write("响应内容".getBytes("字符集"))
+4.字节流中文乱码问题
+	原因：浏览器字符集和编码的字符集不一致
+	解决：告诉浏览器采用的字符集和编码字符集一致
+	使用response.setContentType("text/html;charset=utf-8")也可以解决字节流响应中文乱码问题
+```
+
+**总结：不管是字节流还是字符流响应中文，只要在获取流对象之前调用response的setContentType方法即可**
+
+​	**response.setContentType("text/html;charset=utf-8")**
+
+* 验证码换一换的功能
+
+```html
+1.在.html页面中显示验证码
+<a href="javascript:refershcode()"><img src="..." title="看不清点击刷新" id="vcode"/></a>
+2.实现换一换功能
+function refreshCode() {
+	//实现验证码换一换
+document.getElementById("vcode").src="...?time="+new Date().getTime();
+}
+```
+
+## 5.ServletContext作为域对象存值、取值、移除值
+
+```java
+1.作用范围：整个web项目
+2.创建和销毁时间：服务器启动的时候会为每个web项目创建一个独有的ServletContext对象，服务器关闭或者项目被移除之后销毁
+3.存值、取值、移除值API：
+	存值：request.setAttribute(String name, Object value);
+	取值：Object value=request.getAttribute(String name);
+	移除值：request.removeAttribute(String name);
+```
+
+## 6.ServletContext对象读取文件IO流路径
+
+```java
+1.读取src中的文件资源：
+	1.1.类加载器：
+		String path=类名.class.getClassLoader().getResource("d.txt").getPath();
+		InputStream is = 类名.class.getClassLoader().getResourceAsStream();
+2.读取web中的文件资源，只能使用ServletContext对象读取
+	String realPath = servletContext.getRealPath();
+	InputStream is = servletContext.getResourceAsStream();
+	InputStream is = servletContext.getResourceAsStream();
+```
+
+## 7.response对象实现文件下载
+
+* 修改工具类
+
+```java
+public class DownLoadUtils{
+    public static String getFileName(String agent, String fileName) throws UnsupportedEncodingException{
+        if(agent,contains("MSIE")) {
+            //IE浏览器
+            fileName= URLEncoder.encode(filename, "utf-8");
+            fileName = filename.replace("+"," ")
+        }else if (agent.contains("Firefox")) {
+// 火狐浏览器（修改了）
+Base64.Encoder encoder = Base64.getEncoder();
+filename ="=?utf-8?B?"+ encoder.encodeToString(filename.getBytes("utf-8")) +"?
+=";
+} else {
+// 其它浏览器
+filename = URLEncoder.encode(filename, "utf-8");
+}
+return filename;
+}
+    
+}
 ```
 
