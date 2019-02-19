@@ -259,17 +259,16 @@ public class DownLoadUtils{
             fileName= URLEncoder.encode(filename, "utf-8");
             fileName = filename.replace("+"," ")
         }else if (agent.contains("Firefox")) {
-// 火狐浏览器（修改了）
-Base64.Encoder encoder = Base64.getEncoder();
-filename ="=?utf-8?B?"+ encoder.encodeToString(filename.getBytes("utf-8")) +"?
-=";
-} else {
-// 其它浏览器
-filename = URLEncoder.encode(filename, "utf-8");
-}
-return filename;
-}
-    
+            // 火狐浏览器（修改了）
+            Base64.Encoder encoder = Base64.getEncoder();
+            filename ="=?utf-8?B?"+ encoder.encodeToString(filename.getBytes("utf-8")) +"?
+            =";
+        } else {
+            // 其它浏览器
+            filename = URLEncoder.encode(filename, "utf-8");
+        }
+            return filename;
+    } 
 }
 ```
 
